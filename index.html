@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WebCrawlr v2 — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#080810;--s1:#0f0f1a;--s2:#161624;--s3:#1e1e30;--s4:#26263c;
+  --border:#2d2d48;--border2:#3a3a58;
+  --g:#00e5a0;--g2:#00b87d;
+  --p:#8b5cf6;--p2:#7c3aed;
+  --y:#f59e0b;--r:#ef4444;--b:#3b82f6;
+  --t:#eeeef8;--t2:#9898bc;--t3:#55556a;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Outfit',sans-serif;
+  --rad:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--t);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(0,229,160,.06),transparent),
+    linear-gradient(rgba(139,92,246,.015) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(139,92,246,.015) 1px,transparent 1px);
+  background-size:100% 100%,50px 50px,50px 50px;
+  pointer-events:none;z-index:0;
+}
+.layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh;position:relative;z-index:1;}
+
+/* SIDEBAR */
+.sidebar{background:var(--s1);border-right:1px solid var(--border);padding:24px 16px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.logo{display:flex;align-items:center;gap:10px;padding:0 8px 20px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.logo-mark{width:34px;height:34px;background:linear-gradient(135deg,var(--g),var(--p));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.logo-text{font-family:var(--mono);font-size:15px;color:var(--t);font-weight:700;letter-spacing:-.5px;}
+.logo-v{font-size:10px;color:var(--t3);font-family:var(--mono);}
+.nav-section{font-size:10px;font-family:var(--mono);color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;padding:12px 8px 6px;}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--t2);font-size:13.5px;font-weight:500;transition:.15s;border:1px solid transparent;}
+.nav:hover{background:var(--s2);color:var(--t);}
+.nav.active{background:rgba(0,229,160,.09);color:var(--g);border-color:rgba(0,229,160,.18);}
+.nav-ico{font-size:15px;width:18px;text-align:center;flex-shrink:0;}
+.sidebar-footer{margin-top:auto;padding-top:16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+.health-row{display:flex;align-items:center;gap:8px;padding:0 8px;font-size:11px;color:var(--t3);}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--g);box-shadow:0 0 8px var(--g);animation:pulse 2s infinite;flex-shrink:0;}
+.dot.red{background:var(--r);box-shadow:0 0 8px var(--r);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* MAIN */
+.main{padding:32px 36px;display:flex;flex-direction:column;gap:24px;}
+.page{display:none;}
+.page.on{display:flex;flex-direction:column;gap:22px;}
+
+/* PAGE HEADER */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.pt{font-family:var(--mono);font-size:22px;color:var(--t);font-weight:700;letter-spacing:-.5px;}
+.ps{color:var(--t3);font-size:13px;margin-top:4px;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
+.sc{background:var(--s1);border:1px solid var(--border);border-radius:var(--rad);padding:18px;position:relative;overflow:hidden;}
+.sc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--g));}
+.sl{font-size:10px;font-family:var(--mono);color:var(--t3);text-transform:uppercase;letter-spacing:1px;}
+.sv{font-size:28px;font-family:var(--mono);font-weight:700;color:var(--t);margin-top:6px;line-height:1;}
+
+/* CARD */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:var(--rad);overflow:hidden;}
+.ch{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.ct{font-family:var(--mono);font-size:13px;color:var(--t);font-weight:600;display:flex;align-items:center;gap:8px;}
+.cb{padding:22px;}
+
+/* FORM */
+label{display:block;font-size:11px;font-family:var(--mono);color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;}
+input[type=text],input[type=url],input[type=email],input[type=number],input[type=password],textarea,select{
+  width:100%;background:var(--s2);border:1px solid var(--border);color:var(--t);
+  padding:10px 13px;border-radius:8px;font-family:var(--sans);font-size:13.5px;
+  outline:none;transition:.15s;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--g);box-shadow:0 0 0 3px rgba(0,229,160,.08);}
+textarea{resize:vertical;min-height:90px;font-family:var(--mono);font-size:12px;line-height:1.6;}
+select{cursor:pointer;}
+.fg{display:flex;flex-direction:column;gap:14px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.fc{grid-column:1/-1;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:.15s;font-family:var(--sans);white-space:nowrap;}
+.btn-p{background:var(--g);color:#000;}
+.btn-p:hover{background:var(--g2);transform:translateY(-1px);box-shadow:0 4px 18px rgba(0,229,160,.22);}
+.btn-sec{background:transparent;color:var(--t2);border:1px solid var(--border);}
+.btn-sec:hover{background:var(--s2);color:var(--t);}
+.btn-danger{background:rgba(239,68,68,.12);color:var(--r);border:1px solid rgba(239,68,68,.2);}
+.btn-danger:hover{background:rgba(239,68,68,.22);}
+.btn-purple{background:rgba(139,92,246,.15);color:var(--p);border:1px solid rgba(139,92,246,.25);}
+.btn-purple:hover{background:rgba(139,92,246,.25);}
+.btn-blue{background:rgba(59,130,246,.12);color:var(--b);border:1px solid rgba(59,130,246,.2);}
+.btn-blue:hover{background:rgba(59,130,246,.22);}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-xs{padding:4px 9px;font-size:11px;}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none !important;}
+
+/* MODE TOGGLE */
+.mode-toggle{display:flex;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:3px;gap:3px;}
+.mode-btn{flex:1;padding:7px 14px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;border:none;color:var(--t2);background:transparent;font-family:var(--sans);transition:.15s;}
+.mode-btn.active{background:var(--s4);color:var(--t);}
+
+/* SELECTOR BUILDER */
+.sel-row{display:grid;grid-template-columns:140px 1fr auto;gap:8px;align-items:center;}
+
+/* TABLE */
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);}
+td{padding:13px 16px;border-bottom:1px solid rgba(45,45,72,.5);color:var(--t2);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+td:first-child{color:var(--t);}
+tr:hover td{background:rgba(255,255,255,.012);}
+tr:last-child td{border-bottom:none;}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:10px;font-family:var(--mono);font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.b-run{background:rgba(245,158,11,.12);color:var(--y);}
+.b-done{background:rgba(0,229,160,.1);color:var(--g);}
+.b-err{background:rgba(239,68,68,.1);color:var(--r);}
+.b-off{background:rgba(85,85,106,.15);color:var(--t3);}
+
+/* TABS */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.tab{padding:5px 13px;border-radius:6px;background:var(--s2);border:1px solid var(--border);color:var(--t2);font-size:12px;font-family:var(--mono);cursor:pointer;transition:.15s;}
+.tab.active,.tab:hover{background:rgba(0,229,160,.09);color:var(--g);border-color:rgba(0,229,160,.2);}
+
+/* DATA GRID */
+.dg{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;max-height:400px;overflow-y:auto;padding-right:4px;}
+.dc{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:13px;font-size:11.5px;font-family:var(--mono);line-height:1.7;word-break:break-all;}
+.dk{color:var(--g);margin-top:3px;}
+.dv{color:var(--t2);}
+.dv a{color:var(--p);}
+
+/* CODE */
+.code{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:var(--mono);font-size:12px;color:var(--t2);overflow-x:auto;max-height:300px;overflow-y:auto;white-space:pre;}
+
+/* PROXY STATUS */
+.proxy-row{display:grid;grid-template-columns:auto 1fr auto auto auto;gap:10px;align-items:center;padding:11px 14px;background:var(--s2);border:1px solid var(--border);border-radius:8px;font-size:12px;}
+.pstatus{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.alive{background:var(--g);box-shadow:0 0 6px var(--g);}
+.dead{background:var(--r);}
+
+/* CRON PRESETS */
+.cron-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.cron-preset{padding:4px 10px;border-radius:6px;background:var(--s3);border:1px solid var(--border2);color:var(--t2);font-size:11px;font-family:var(--mono);cursor:pointer;transition:.15s;}
+.cron-preset:hover{background:rgba(139,92,246,.15);color:var(--p);border-color:rgba(139,92,246,.25);}
+
+/* SPINNER */
+.spin{width:16px;height:16px;border:2px solid rgba(0,229,160,.2);border-top-color:var(--g);border-radius:50%;animation:_spin .6s linear infinite;display:inline-block;flex-shrink:0;}
+@keyframes _spin{to{transform:rotate(360deg);}}
+
+/* TOAST */
+#toast{position:fixed;bottom:22px;right:22px;display:flex;flex-direction:column;gap:8px;z-index:9999;}
+.toast{background:var(--s2);border:1px solid var(--border);border-left:3px solid var(--g);color:var(--t);padding:11px 16px;border-radius:8px;font-size:13px;animation:tin .2s ease;max-width:320px;}
+.toast.err{border-left-color:var(--r);}
+.toast.ok{border-left-color:var(--g);}
+.toast.info{border-left-color:var(--b);}
+@keyframes tin{from{transform:translateX(110%);opacity:0;}}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--t3);font-size:13px;}
+.ei{font-size:36px;margin-bottom:10px;opacity:.35;}
+
+/* UTILS */
+.flex{display:flex;align-items:center;gap:8px;}
+.fw{flex-wrap:wrap;}
+.ml{margin-left:auto;}
+.mt8{margin-top:8px;}
+.mt16{margin-top:16px;}
+.dim{opacity:.5;font-size:11px;}
+.mono{font-family:var(--mono);}
+.green{color:var(--g);}
+.red{color:var(--r);}
+.yellow{color:var(--y);}
+.purple{color:var(--p);}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* SCHEDULE CARD */
+.sched-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--rad);padding:16px 18px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start;}
+.sched-url{font-size:13px;color:var(--t);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+.sched-meta{font-size:11px;font-family:var(--mono);color:var(--t3);margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;}
+.sched-actions{display:flex;gap:6px;flex-shrink:0;}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">🕷</div>
+    <div><div class="logo-text">WebCrawlr</div><div class="logo-v">v2.0 — Pro</div></div>
+  </div>
+
+  <div class="nav-section">Scraping</div>
+  <div class="nav active" onclick="go('scrape',this)"><span class="nav-ico">⚡</span> Nouveau Scrape</div>
+  <div class="nav" onclick="go('bulk',this)"><span class="nav-ico">📦</span> Bulk Scrape</div>
+  <div class="nav" onclick="go('jobs',this);loadJobs()"><span class="nav-ico">📋</span> Historique</div>
+  <div class="nav" onclick="go('results',this)"><span class="nav-ico">📊</span> Résultats</div>
+
+  <div class="nav-section">Automatisation</div>
+  <div class="nav" onclick="go('scheduler',this);loadSchedules()"><span class="nav-ico">⏰</span> Scheduler (Cron)</div>
+  <div class="nav" onclick="go('proxies',this);loadProxies()"><span class="nav-ico">🔀</span> Proxy Rotatif</div>
+
+  <div class="nav-section">Configuration</div>
+  <div class="nav" onclick="go('notifs',this);loadSettings()"><span class="nav-ico">🔔</span> Notifications</div>
+  <div class="nav" onclick="go('sheets',this);loadSettings()"><span class="nav-ico">📗</span> Google Sheets</div>
+  <div class="nav" onclick="go('docs',this)"><span class="nav-ico">📖</span> Aide</div>
+
+  <div class="sidebar-footer">
+    <div class="health-row"><span class="dot" id="api-dot"></span><span id="api-lbl">Vérification...</span></div>
+    <div class="health-row mono" id="api-stats" style="font-size:10px;"></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ══ SCRAPE ══════════════════════════════════════════════════════════════════ -->
+<div id="page-scrape" class="page on">
+  <div class="ph">
+    <div><div class="pt">⚡ Nouveau Scrape</div><div class="ps">Extraction intelligente de données web</div></div>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="m-axios" onclick="setMode('axios')">⚡ Axios</button>
+      <button class="mode-btn" id="m-pup" onclick="setMode('puppeteer')">🤖 Puppeteer</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ct">🎯 Configuration du scrape</div></div>
+    <div class="cb fg">
+      <div>
+        <label>URL à scraper</label>
+        <input type="url" id="sc-url" placeholder="https://example.com/products"/>
+      </div>
+
+      <div>
+        <div class="flex" style="margin-bottom:10px;">
+          <label style="margin:0;">Sélecteurs CSS <span class="dim">(optionnel — vide = auto)</span></label>
+          <button class="btn btn-sec btn-sm ml" onclick="addSel('sc-sels')">+ Ajouter</button>
+        </div>
+        <div class="fg" id="sc-sels"></div>
+      </div>
+
+      <div class="g2" id="sc-adv" style="display:none;">
+        <div>
+          <label>Attendre sélecteur (Puppeteer)</label>
+          <input type="text" id="sc-wait" placeholder=".products"/>
+        </div>
+        <div style="padding-top:22px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="sc-scroll" style="width:auto;cursor:pointer;"/>
+            Scroll auto (lazy load)
+          </label>
+        </div>
+        <div>
+          <label>Proxy personnalisé <span class="dim">(ou utilise le pool)</span></label>
+          <input type="text" id="sc-proxy-custom" placeholder="http://user:pass@ip:port"/>
+        </div>
+        <div style="padding-top:22px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="sc-use-proxy" style="width:auto;cursor:pointer;"/>
+            Utiliser proxy rotatif
+          </label>
+        </div>
+      </div>
+
+      <div class="flex fw">
+        <button class="btn btn-p" id="sc-btn" onclick="startScrape()">⚡ Lancer le scrape</button>
+        <button class="btn btn-sec" onclick="toggleAdv()">⚙ Options avancées</button>
+        <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--t2);font-size:13px;text-transform:none;letter-spacing:0;">
+          <input type="checkbox" id="sc-notify" style="width:auto;cursor:pointer;" checked/>
+          Notifier quand terminé
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="sc-result" style="display:none;">
+    <div class="ch">
+      <div class="ct" id="sc-res-title">📊 Résultats</div>
+      <div class="flex gap-6">
+        <button class="btn btn-sec btn-sm" onclick="exportJSON_sc()">↓ JSON</button>
+        <button class="btn btn-sec btn-sm" onclick="exportCSV_sc()">↓ CSV</button>
+        <button class="btn btn-purple btn-sm" id="sc-sheets-btn" onclick="exportSheets_sc()">📗 Sheets</button>
+      </div>
+    </div>
+    <div class="cb" id="sc-res-body">
+      <div class="flex"><div class="spin"></div><span style="color:var(--t2);margin-left:6px;">Scraping...</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BULK ════════════════════════════════════════════════════════════════════ -->
+<div id="page-bulk" class="page">
+  <div class="ph"><div><div class="pt">📦 Bulk Scrape</div><div class="ps">Jusqu'à 20 URLs en parallèle (concurrence 5)</div></div></div>
+  <div class="card">
+    <div class="ch"><div class="ct">📋 URLs (1 par ligne)</div></div>
+    <div class="cb fg">
+      <div>
+        <label>Liste d'URLs</label>
+        <textarea id="bulk-urls" style="min-height:130px;" placeholder="https://site1.com&#10;https://site2.com/page&#10;https://site3.com"></textarea>
+      </div>
+      <div>
+        <div class="flex" style="margin-bottom:10px;">
+          <label style="margin:0;">Sélecteurs CSS communs</label>
+          <button class="btn btn-sec btn-sm ml" onclick="addSel('bulk-sels')">+ Ajouter</button>
+        </div>
+        <div class="fg" id="bulk-sels"></div>
+      </div>
+      <div class="flex fw">
+        <button class="btn btn-p" onclick="startBulk()">⚡ Lancer le bulk scrape</button>
+        <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--t2);font-size:13px;text-transform:none;letter-spacing:0;">
+          <input type="checkbox" id="bulk-use-proxy" style="width:auto;cursor:pointer;"/>
+          Proxy rotatif
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="card" id="bulk-res" style="display:none;">
+    <div class="ch"><div class="ct">📊 Progression</div></div>
+    <div class="cb" id="bulk-res-body"></div>
+  </div>
+</div>
+
+<!-- ══ JOBS ════════════════════════════════════════════════════════════════════ -->
+<div id="page-jobs" class="page">
+  <div class="ph">
+    <div><div class="pt">📋 Historique des jobs</div><div class="ps">Tous vos scrapes passés</div></div>
+    <div class="flex">
+      <button class="btn btn-sec btn-sm" onclick="loadJobs()">↻ Rafraîchir</button>
+      <button class="btn btn-danger btn-sm" onclick="clearJobs()">🗑 Tout effacer</button>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="sc"><div class="sl">Total</div><div class="sv" id="js-tot">0</div></div>
+    <div class="sc" style="--ac:var(--y)"><div class="sl">En cours</div><div class="sv" id="js-run">0</div></div>
+    <div class="sc" style="--ac:var(--g)"><div class="sl">Succès</div><div class="sv" id="js-ok">0</div></div>
+    <div class="sc" style="--ac:var(--r)"><div class="sl">Erreurs</div><div class="sv" id="js-err">0</div></div>
+  </div>
+  <div class="card">
+    <div class="tw">
+      <table>
+        <thead><tr><th>URL</th><th>Mode</th><th>Proxy</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead>
+        <tbody id="jobs-body"><tr><td colspan="6"><div class="empty"><div class="ei">📭</div>Aucun job</div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RESULTS ═════════════════════════════════════════════════════════════════ -->
+<div id="page-results" class="page">
+  <div class="ph"><div><div class="pt">📊 Résultats</div><div class="ps">Explorer et exporter vos données</div></div></div>
+  <div class="card">
+    <div class="ch"><div class="ct">🔍 Charger un résultat</div></div>
+    <div class="cb"><div class="flex"><input type="text" id="res-id" placeholder="Job ID..." style="max-width:380px;"/><button class="btn btn-p" onclick="loadResult()">Charger</button></div></div>
+  </div>
+  <div id="res-viewer" style="display:none;flex-direction:column;gap:16px;"></div>
+</div>
+
+<!-- ══ SCHEDULER ═══════════════════════════════════════════════════════════════ -->
+<div id="page-scheduler" class="page">
+  <div class="ph"><div><div class="pt">⏰ Scheduler Cron</div><div class="ps">Automatisez vos scrapes selon un planning</div></div></div>
+
+  <div class="card">
+    <div class="ch"><div class="ct">➕ Nouveau scrape planifié</div></div>
+    <div class="cb fg">
+      <div class="g2">
+        <div>
+          <label>URL à scraper</label>
+          <input type="url" id="sch-url" placeholder="https://example.com"/>
+        </div>
+        <div>
+          <label>Mode</label>
+          <select id="sch-mode"><option value="axios">⚡ Axios (rapide)</option><option value="puppeteer">🤖 Puppeteer (JS)</option></select>
+        </div>
+      </div>
+      <div>
+        <label>Expression Cron</label>
+        <input type="text" id="sch-cron" placeholder="0 * * * *" oninput="updateCronHuman()"/>
+        <div class="cron-presets">
+          <span class="cron-preset" onclick="setCron('*/30 * * * *','Toutes les 30 min')">30 min</span>
+          <span class="cron-preset" onclick="setCron('0 * * * *','Toutes les heures')">1h</span>
+          <span class="cron-preset" onclick="setCron('0 */6 * * *','Toutes les 6h')">6h</span>
+          <span class="cron-preset" onclick="setCron('0 8 * * *','Chaque jour à 8h')">Quotidien 8h</span>
+          <span class="cron-preset" onclick="setCron('0 8 * * 1','Chaque lundi à 8h')">Lundi 8h</span>
+          <span class="cron-preset" onclick="setCron('0 9 1 * *','Le 1er du mois à 9h')">Mensuel</span>
+        </div>
+        <div id="cron-human" style="margin-top:8px;font-size:12px;color:var(--g);font-family:var(--mono);"></div>
+      </div>
+      <div>
+        <div class="flex" style="margin-bottom:10px;">
+          <label style="margin:0;">Sélecteurs CSS <span class="dim">(optionnel)</span></label>
+          <button class="btn btn-sec btn-sm ml" onclick="addSel('sch-sels')">+ Ajouter</button>
+        </div>
+        <div class="fg" id="sch-sels"></div>
+      </div>
+      <div>
+        <button class="btn btn-p" onclick="createSchedule()">⏰ Créer le planning</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch">
+      <div class="ct">📅 Plannings actifs</div>
+      <button class="btn btn-sec btn-sm" onclick="loadSchedules()">↻ Rafraîchir</button>
+    </div>
+    <div class="cb fg" id="sch-list"><div class="empty"><div class="ei">⏰</div>Aucun planning</div></div>
+  </div>
+</div>
+
+<!-- ══ PROXIES ═════════════════════════════════════════════════════════════════ -->
+<div id="page-proxies" class="page">
+  <div class="ph"><div><div class="pt">🔀 Proxy Rotatif</div><div class="ps">Rotation automatique pour éviter les blocages</div></div></div>
+
+  <div class="stats">
+    <div class="sc"><div class="sl">Total proxies</div><div class="sv" id="px-total">0</div></div>
+    <div class="sc" style="--ac:var(--g)"><div class="sl">Actifs</div><div class="sv" id="px-alive">0</div></div>
+    <div class="sc" style="--ac:var(--r)"><div class="sl">Morts (&gt;5 erreurs)</div><div class="sv" id="px-dead">0</div></div>
+    <div class="sc" style="--ac:var(--b)"><div class="sl">Requêtes routées</div><div class="sv" id="px-used">0</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ct">➕ Ajouter des proxies</div></div>
+    <div class="cb fg">
+      <div>
+        <label>URLs de proxy (1 par ligne)</label>
+        <textarea id="px-input" style="min-height:110px;" placeholder="http://user:pass@ip:port&#10;socks5://ip:port&#10;http://ip:port"></textarea>
+      </div>
+      <div class="flex fw">
+        <button class="btn btn-p" onclick="addProxies()">➕ Ajouter</button>
+        <button class="btn btn-sec" onclick="testProxy()">🔍 Tester le 1er</button>
+        <button class="btn btn-danger btn-sm ml" onclick="clearProxies()">🗑 Vider le pool</button>
+      </div>
+      <div id="px-test-res" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch">
+      <div class="ct">🔀 Pool de proxies</div>
+      <button class="btn btn-sec btn-sm" onclick="loadProxies()">↻ Rafraîchir</button>
+    </div>
+    <div class="cb fg" id="px-list"><div class="empty"><div class="ei">🔀</div>Aucun proxy configuré</div></div>
+  </div>
+</div>
+
+<!-- ══ NOTIFICATIONS ═══════════════════════════════════════════════════════════ -->
+<div id="page-notifs" class="page">
+  <div class="ph"><div><div class="pt">🔔 Notifications</div><div class="ps">Email SMTP et Webhook pour chaque scrape terminé</div></div></div>
+
+  <div class="card">
+    <div class="ch"><div class="ct">📧 Configuration Email SMTP</div></div>
+    <div class="cb fg">
+      <div class="g3">
+        <div><label>Serveur SMTP</label><input type="text" id="smtp-host" placeholder="smtp.gmail.com"/></div>
+        <div><label>Port</label><input type="number" id="smtp-port" placeholder="587" value="587"/></div>
+        <div><label>Sécurité</label><select id="smtp-sec"><option value="587">TLS (587)</option><option value="465">SSL (465)</option></select></div>
+      </div>
+      <div class="g2">
+        <div><label>Utilisateur</label><input type="email" id="smtp-user" placeholder="you@gmail.com"/></div>
+        <div><label>Mot de passe / App Password</label><input type="password" id="smtp-pass" placeholder="••••••••"/></div>
+      </div>
+      <div class="g2">
+        <div><label>Email expéditeur</label><input type="email" id="smtp-from" placeholder="webcrawlr@you.com"/></div>
+        <div><label>Email destinataire (notifications)</label><input type="email" id="smtp-to" placeholder="you@example.com"/></div>
+      </div>
+      <div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--t2);">
+        💡 <strong style="color:var(--b);">Gmail :</strong> utilisez un <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:var(--p);">App Password</a> (pas votre vrai mot de passe).
+        <strong style="color:var(--b);">SendGrid/Mailgun</strong> marchent aussi très bien.
+      </div>
+      <div class="flex">
+        <button class="btn btn-p" onclick="saveNotifSettings()">💾 Sauvegarder</button>
+        <button class="btn btn-sec" onclick="testEmail()">✉ Envoyer un email test</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ct">🔗 Webhook</div></div>
+    <div class="cb fg">
+      <div>
+        <label>URL du Webhook (Discord, Slack, Make, Zapier, n8n...)</label>
+        <input type="url" id="wh-url" placeholder="https://hooks.slack.com/services/..."/>
+      </div>
+      <div style="background:rgba(0,229,160,.04);border:1px solid rgba(0,229,160,.12);border-radius:8px;padding:12px 14px;">
+        <div style="font-size:12px;color:var(--t3);margin-bottom:8px;">Payload JSON envoyé :</div>
+        <div class="code" style="font-size:11px;">{
+  "event": "scrape_finished",
+  "jobId": "uuid",
+  "url": "https://...",
+  "status": "done" | "error",
+  "itemsCount": 42,
+  "finishedAt": "2025-01-01T12:00:00Z"
+}</div>
+      </div>
+      <div class="flex">
+        <button class="btn btn-p" onclick="saveNotifSettings()">💾 Sauvegarder</button>
+        <button class="btn btn-sec" onclick="testWebhook()">🔗 Tester le webhook</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GOOGLE SHEETS ════════════════════════════════════════════════════════════ -->
+<div id="page-sheets" class="page">
+  <div class="ph"><div><div class="pt">📗 Google Sheets</div><div class="ps">Exportez vos données directement dans un spreadsheet</div></div></div>
+
+  <div class="card">
+    <div class="ch"><div class="ct">🔑 Credentials API Google</div></div>
+    <div class="cb fg">
+      <div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:8px;padding:14px;font-size:13px;color:var(--t2);line-height:1.8;">
+        <strong style="color:var(--b);">Comment configurer :</strong><br/>
+        1. Allez sur <a href="https://console.cloud.google.com" target="_blank" style="color:var(--p);">console.cloud.google.com</a><br/>
+        2. Créez un projet → Activez l'API Google Sheets<br/>
+        3. Créez un <strong>Compte de service</strong> → Téléchargez le JSON de credentials<br/>
+        4. Partagez votre Google Sheet avec l'email du compte de service<br/>
+        5. Collez le contenu du JSON ci-dessous
+      </div>
+      <div>
+        <label>JSON Credentials (Service Account)</label>
+        <textarea id="gs-creds" style="min-height:120px;" placeholder='{"type":"service_account","project_id":"...","private_key":"-----BEGIN RSA...","client_email":"...@...iam.gserviceaccount.com",...}'></textarea>
+      </div>
+      <div>
+        <label>ID du Google Spreadsheet</label>
+        <input type="text" id="gs-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"/>
+        <div class="mt8" style="font-size:12px;color:var(--t3);">L'ID se trouve dans l'URL : docs.google.com/spreadsheets/d/<strong style="color:var(--g);">[ID ICI]</strong>/edit</div>
+      </div>
+      <div>
+        <button class="btn btn-p" onclick="saveSheetSettings()">💾 Sauvegarder</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ct">📤 Export manuel</div></div>
+    <div class="cb fg">
+      <div class="g2">
+        <div><label>Job ID à exporter</label><input type="text" id="gs-job-id" placeholder="job-uuid..."/></div>
+        <div><label>Nom de l'onglet (optionnel)</label><input type="text" id="gs-tab" placeholder="Scrape_produits"/></div>
+      </div>
+      <div>
+        <button class="btn btn-p" onclick="manualExportSheets()">📗 Exporter vers Sheets</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DOCS ════════════════════════════════════════════════════════════════════ -->
+<div id="page-docs" class="page">
+  <div class="ph"><div><div class="pt">📖 Documentation</div><div class="ps">Installation et utilisation de WebCrawlr v2</div></div></div>
+  <div class="card"><div class="ch"><div class="ct">🚀 Installation VPS (Docker)</div></div>
+    <div class="cb fg">
+      <div><label>1. Installer Docker</label><div class="code">curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER && newgrp docker</div></div>
+      <div><label>2. Uploader le projet</label><div class="code">scp -r scraper-dashboard user@VOTRE_IP:/home/user/
+ssh user@VOTRE_IP
+cd scraper-dashboard</div></div>
+      <div><label>3. Lancer</label><div class="code">docker-compose up -d --build</div></div>
+      <div><label>4. Accéder au dashboard</label><div class="code">http://VOTRE_IP:80</div></div>
+    </div>
+  </div>
+  <div class="card"><div class="ch"><div class="ct">🔒 Sécuriser avec HTTPS + mot de passe</div></div>
+    <div class="cb fg">
+      <div><label>Installer Caddy (reverse proxy HTTPS auto)</label>
+        <div class="code">apt install caddy
+# Dans /etc/caddy/Caddyfile :
+scraper.votre-domaine.com {
+  basicauth /* {
+    admin $2a$14$votre_hash_bcrypt
+  }
+  reverse_proxy localhost:80
+}</div>
+      </div>
+    </div>
+  </div>
+  <div class="card"><div class="ch"><div class="ct">🎯 Sélecteurs CSS — Cheatsheet</div></div>
+    <div class="cb"><div class="code"># Par classe
+.product-title        → tous les éléments avec class="product-title"
+.price, .cost         → prix OU coût
+
+# Par attribut
+a[href]               → tous les liens
+img[src]              → toutes les images
+input[type="email"]   → champs email
+
+# Combinés
+.card h2              → h2 à l'intérieur d'une .card
+table tr td:first-child → 1ère colonne d'un tableau
+ul.menu > li          → li directs dans ul.menu
+
+# Nth
+.product:nth-child(2) → 2ème produit
+.item:last-child      → dernier item</div></div>
+  </div>
+</div>
+
+</main>
+</div>
+<div id="toast"></div>
+
+<script>
+const API = '/api'; // proxied via nginx → backend:3001
+let currentMode = 'axios';
+let currentJobId = null;
+let pollTimer = null;
+let _scResult = null;
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function go(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nav').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('on');
+  if (el) el.classList.add('active');
+}
+
+// ── MODE ──────────────────────────────────────────────────────────────────────
+function setMode(m) {
+  currentMode = m;
+  document.getElementById('m-axios').classList.toggle('active', m==='axios');
+  document.getElementById('m-pup').classList.toggle('active', m==='puppeteer');
+  document.getElementById('sc-adv').style.display = 'grid';
+}
+function toggleAdv() {
+  const e = document.getElementById('sc-adv');
+  e.style.display = e.style.display === 'none' ? 'grid' : 'none';
+}
+
+// ── SELECTOR BUILDER ──────────────────────────────────────────────────────────
+function addSel(listId) {
+  const list = document.getElementById(listId);
+  const row = document.createElement('div');
+  row.className = 'sel-row';
+  row.innerHTML = `
+    <input type="text" placeholder="nom (ex: prix)"/>
+    <input type="text" placeholder="sélecteur CSS (ex: .price)"/>
+    <button class="btn btn-sec btn-sm" onclick="this.parentNode.remove()">✕</button>`;
+  list.appendChild(row);
+}
+
+function getSels(listId) {
+  const s = {};
+  document.querySelectorAll(`#${listId} .sel-row`).forEach(row => {
+    const [n,v] = row.querySelectorAll('input');
+    if (n.value.trim() && v.value.trim()) s[n.value.trim()] = v.value.trim();
+  });
+  return s;
+}
+
+// ── SCRAPE ────────────────────────────────────────────────────────────────────
+async function startScrape() {
+  const url = document.getElementById('sc-url').value.trim();
+  if (!url) return toast('URL requise','err');
+  const selectors = getSels('sc-sels');
+  const notify = document.getElementById('sc-notify').checked;
+  const useProxy = document.getElementById('sc-use-proxy').checked;
+  const options = {
+    useProxy,
+    waitFor: document.getElementById('sc-wait').value.trim()||undefined,
+    scrollToBottom: document.getElementById('sc-scroll').checked||undefined,
+  };
+
+  const btn = document.getElementById('sc-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Scraping...';
+  document.getElementById('sc-result').style.display = '';
+  document.getElementById('sc-res-title').textContent = '📊 ' + url;
+  document.getElementById('sc-res-body').innerHTML = `<div class="flex"><div class="spin"></div><span style="color:var(--t2);margin-left:6px;">Envoi de la requête...</span></div>`;
+
+  try {
+    const r = await fetch(`${API}/scrape`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ url, selectors, mode: currentMode, options, notify })
+    });
+    const { jobId } = await r.json();
+    currentJobId = jobId;
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(async () => {
+      const d = await (await fetch(`${API}/results/${jobId}`)).json();
+      if (d.status === 'done') {
+        clearInterval(pollTimer);
+        _scResult = d.result;
+        renderScrapeResult(d.result);
+        btn.disabled = false; btn.innerHTML = '⚡ Lancer le scrape';
+        toast('Scrape terminé ✅','ok');
+      } else if (d.status === 'error') {
+        clearInterval(pollTimer);
+        document.getElementById('sc-res-body').innerHTML = `<p class="red">❌ ${d.error}</p>`;
+        btn.disabled = false; btn.innerHTML = '⚡ Lancer le scrape';
+        toast('Erreur: '+d.error,'err');
+      }
+    }, 1200);
+  } catch(e) {
+    document.getElementById('sc-res-body').innerHTML = `<p class="red">❌ ${e.message} — Backend démarré ?</p>`;
+    btn.disabled = false; btn.innerHTML = '⚡ Lancer le scrape';
+  }
+}
+
+function renderScrapeResult(result) {
+  const keys = Object.keys(result.data);
+  let h = `<div style="margin-bottom:14px;font-size:12px;color:var(--t3);display:flex;gap:16px;flex-wrap:wrap;">
+    <span>📦 <strong style="color:var(--t)">${result.stats.totalKeys}</strong> catégories</span>
+    <span>🔢 <strong style="color:var(--t)">${result.stats.totalItems}</strong> éléments</span>
+    <span>⏱ ${new Date(result.scrapedAt).toLocaleTimeString('fr-FR')}</span>
+    ${result.proxyUsed ? `<span>🔀 Proxy: <span class="mono" style="font-size:11px;">${result.proxyUsed}</span></span>` : ''}
+  </div>
+  <div class="tabs" id="sc-tabs">`;
+  keys.forEach((k,i) => {
+    const cnt = Array.isArray(result.data[k]) ? result.data[k].length : 1;
+    h += `<div class="tab${i===0?' active':''}" onclick="scTab(this,'${k}')">${k} <span class="dim">(${cnt})</span></div>`;
+  });
+  h += `</div><div id="sc-tab-content" style="margin-top:14px;"></div>`;
+  document.getElementById('sc-res-body').innerHTML = h;
+  document.getElementById('sc-res-body')._data = result.data;
+  if (keys.length) scTab(document.querySelector('#sc-tabs .tab'), keys[0]);
+}
+
+function scTab(el, key) {
+  document.querySelectorAll('#sc-tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const data = document.getElementById('sc-res-body')._data;
+  document.getElementById('sc-tab-content').innerHTML = renderItems(data[key]);
+}
+
+function renderItems(items) {
+  if (!Array.isArray(items)) return `<div class="code">${JSON.stringify(items,null,2)}</div>`;
+  if (!items.length) return '<div class="empty"><div class="ei">📭</div>Aucun élément</div>';
+  let h = '<div class="dg">';
+  items.slice(0,200).forEach(item => {
+    h += '<div class="dc">';
+    Object.entries(item).forEach(([k,v]) => {
+      if (v) {
+        const val = (k==='href'||k==='src')&&v.startsWith('http') ? `<a href="${v}" target="_blank">${v}</a>` : v;
+        h += `<div class="dk">${k}:</div><div class="dv">${val}</div>`;
+      }
+    });
+    h += '</div>';
+  });
+  h += '</div>';
+  if (items.length > 200) h += `<div style="text-align:center;color:var(--t3);font-size:12px;margin-top:8px;">+ ${items.length-200} autres éléments</div>`;
+  return h;
+}
+
+function exportJSON_sc() {
+  if (!_scResult) return;
+  dl(JSON.stringify(_scResult,null,2), `scrape-${currentJobId}.json`, 'application/json');
+  toast('Export JSON ✅','ok');
+}
+function exportCSV_sc() {
+  if (!currentJobId) return;
+  window.open(`${API}/results/${currentJobId}/csv`);
+}
+async function exportSheets_sc() {
+  if (!currentJobId) return;
+  const btn = document.getElementById('sc-sheets-btn');
+  btn.disabled = true; btn.innerHTML = '⏳ Export...';
+  try {
+    const r = await fetch(`${API}/results/${currentJobId}/export-sheets`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});
+    const d = await r.json();
+    if (d.success) { toast('Exporté vers Google Sheets ✅','ok'); window.open(d.url,'_blank'); }
+    else toast('Erreur Sheets: '+d.error,'err');
+  } catch(e) { toast('Erreur: '+e.message,'err'); }
+  finally { btn.disabled=false; btn.innerHTML='📗 Sheets'; }
+}
+
+function dl(content, filename, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content],{type}));
+  a.download = filename; a.click();
+}
+
+// ── BULK ──────────────────────────────────────────────────────────────────────
+async function startBulk() {
+  const urls = document.getElementById('bulk-urls').value.trim().split('\n').map(u=>u.trim()).filter(Boolean);
+  if (!urls.length) return toast('Ajoutez des URLs','err');
+  if (urls.length > 20) return toast('Max 20 URLs','err');
+  const selectors = getSels('bulk-sels');
+  const useProxy = document.getElementById('bulk-use-proxy').checked;
+
+  const panel = document.getElementById('bulk-res');
+  const body = document.getElementById('bulk-res-body');
+  panel.style.display = '';
+  body.innerHTML = `<div class="flex"><div class="spin"></div><span style="margin-left:6px;color:var(--t2);">Lancement de ${urls.length} jobs...</span></div>`;
+
+  try {
+    const r = await fetch(`${API}/bulk-scrape`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({urls,selectors,mode:currentMode,options:{useProxy}})});
+    const { jobIds } = await r.json();
+    toast(`${jobIds.length} jobs lancés`,'info');
+    pollBulk(jobIds, urls);
+  } catch(e) { body.innerHTML = `<p class="red">Erreur: ${e.message}</p>`; }
+}
+
+function pollBulk(jobIds, urls) {
+  const statuses = Object.fromEntries(jobIds.map(id=>[id,'running']));
+  const body = document.getElementById('bulk-res-body');
+  const interval = setInterval(async () => {
+    let done = true;
+    for (const id of jobIds) {
+      if (statuses[id]==='running') {
+        try {
+          const j = await (await fetch(`${API}/jobs/${id}`)).json();
+          statuses[id] = j.status;
+          if (j.status==='running') done = false;
+        } catch {}
+      }
+    }
+    body.innerHTML = `<div class="fg">` + jobIds.map((id,i) => {
+      const s = statuses[id];
+      const ico = s==='running'?'⏳':s==='done'?'✅':'❌';
+      return `<div class="flex" style="font-size:13px;">
+        <span>${ico}</span>
+        <span style="color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${urls[i]}</span>
+        <span class="badge b-${s==='done'?'done':s==='error'?'err':'run'}">${s}</span>
+        ${s==='done'?`<button class="btn btn-sec btn-xs" onclick="gotoResult('${id}')">Voir</button>`:''}
+      </div>`;
+    }).join('') + `</div>`;
+    if (done) { clearInterval(interval); toast('Bulk scrape terminé ✅','ok'); }
+  }, 1400);
+}
+
+function gotoResult(id) {
+  document.getElementById('res-id').value = id;
+  document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById('page-results').classList.add('on');
+  loadResult(id);
+}
+
+// ── JOBS ──────────────────────────────────────────────────────────────────────
+async function loadJobs() {
+  try {
+    const jobs = await (await fetch(`${API}/jobs`)).json();
+    const tot = jobs.length, run = jobs.filter(j=>j.status==='running').length;
+    const ok = jobs.filter(j=>j.status==='done').length, err = jobs.filter(j=>j.status==='error').length;
+    document.getElementById('js-tot').textContent = tot;
+    document.getElementById('js-run').textContent = run;
+    document.getElementById('js-ok').textContent = ok;
+    document.getElementById('js-err').textContent = err;
+
+    const body = document.getElementById('jobs-body');
+    if (!jobs.length) { body.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="ei">📭</div>Aucun job</div></td></tr>`; return; }
+    body.innerHTML = jobs.slice(0,60).map(j => `<tr>
+      <td title="${j.url}">${j.url}</td>
+      <td><span class="mono" style="font-size:11px;">${j.mode}</span></td>
+      <td style="font-size:11px;color:var(--t3);">${j.proxyUsed ? '🔀 oui' : '—'}</td>
+      <td><span class="badge b-${j.status==='done'?'done':j.status==='error'?'err':'run'}">${j.status}</span></td>
+      <td>${new Date(j.createdAt).toLocaleString('fr-FR')}</td>
+      <td><div class="flex">
+        ${j.status==='done'?`<button class="btn btn-sec btn-xs" onclick="gotoResult('${j.id}')">📊</button>`:''}
+        <button class="btn btn-danger btn-xs" onclick="deleteJob('${j.id}',this)">🗑</button>
+      </div></td>
+    </tr>`).join('');
+  } catch(e) { toast('Backend hors ligne ?','err'); }
+}
+
+async function deleteJob(id, btn) {
+  btn.disabled = true;
+  await fetch(`${API}/jobs/${id}`,{method:'DELETE'});
+  loadJobs(); toast('Job supprimé');
+}
+
+async function clearJobs() {
+  if (!confirm('Supprimer tous les jobs ?')) return;
+  await fetch(`${API}/jobs`,{method:'DELETE'});
+  loadJobs(); toast('Historique effacé');
+}
+
+// ── RESULTS ───────────────────────────────────────────────────────────────────
+async function loadResult(idOverride) {
+  const id = idOverride || document.getElementById('res-id').value.trim();
+  if (!id) return toast('Entrez un Job ID','err');
+  const viewer = document.getElementById('res-viewer');
+  viewer.style.display = 'flex';
+  viewer.innerHTML = `<div class="card"><div class="cb"><div class="flex"><div class="spin"></div><span style="color:var(--t2);margin-left:6px;">Chargement...</span></div></div></div>`;
+  try {
+    const d = await (await fetch(`${API}/results/${id}`)).json();
+    if (d.status==='running') { viewer.innerHTML = `<div class="card"><div class="cb"><div class="flex"><div class="spin"></div><span style="margin-left:6px;color:var(--y);">Job en cours...</span></div></div></div>`; return; }
+    if (d.status==='error')   { viewer.innerHTML = `<div class="card"><div class="cb"><p class="red">❌ ${d.error}</p></div></div>`; return; }
+    const result = d.result;
+    viewer._data = result.data;
+    const keys = Object.keys(result.data);
+    let h = `<div class="card">
+      <div class="ch">
+        <div class="ct">📊 ${result.url}</div>
+        <div class="flex">
+          <button class="btn btn-sec btn-sm" onclick="window.open('${API}/results/${id}/csv')">↓ CSV</button>
+          <button class="btn btn-sec btn-sm" onclick='dl(JSON.stringify(${JSON.stringify(result)},null,2),"scrape-${id}.json","application/json");toast("JSON ✅","ok")'>↓ JSON</button>
+          <button class="btn btn-purple btn-sm" onclick="resExportSheets('${id}')">📗 Sheets</button>
+        </div>
+      </div>
+      <div class="cb">
+        <div style="font-size:12px;color:var(--t3);margin-bottom:14px;display:flex;gap:16px;flex-wrap:wrap;">
+          <span>📦 ${result.stats.totalKeys} catégories</span><span>🔢 ${result.stats.totalItems} éléments</span>
+          <span>⏱ ${new Date(result.scrapedAt).toLocaleString('fr-FR')}</span>
+        </div>
+        <div class="tabs" id="res-tabs">`;
+    keys.forEach((k,i)=>{
+      const cnt = Array.isArray(result.data[k])?result.data[k].length:1;
+      h+=`<div class="tab${i===0?' active':''}" onclick="resTab(this,'${k}')">${k} <span class="dim">(${cnt})</span></div>`;
+    });
+    h+=`</div><div id="res-tab-content" style="margin-top:14px;"></div></div></div>`;
+    viewer.innerHTML = h;
+    viewer._data = result.data;
+    if (keys.length) resTab(document.querySelector('#res-tabs .tab'), keys[0]);
+  } catch(e) { viewer.innerHTML = `<div class="card"><div class="cb"><p class="red">Erreur: ${e.message}</p></div></div>`; }
+}
+
+function resTab(el, key) {
+  document.querySelectorAll('#res-tabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('res-tab-content').innerHTML = renderItems(document.getElementById('res-viewer')._data[key]);
+}
+
+async function resExportSheets(id) {
+  const tab = prompt('Nom de l\'onglet Google Sheets (laisser vide pour auto):') || '';
+  try {
+    const r = await fetch(`${API}/results/${id}/export-sheets`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sheetName:tab})});
+    const d = await r.json();
+    if (d.success) { toast('Exporté ✅','ok'); window.open(d.url,'_blank'); }
+    else toast('Erreur: '+d.error,'err');
+  } catch(e) { toast(e.message,'err'); }
+}
+
+// ── SCHEDULER ─────────────────────────────────────────────────────────────────
+const CRON_LABELS = {
+  '*/30 * * * *':'Toutes les 30 minutes','0 * * * *':'Toutes les heures',
+  '0 */6 * * *':'Toutes les 6 heures','0 8 * * *':'Chaque jour à 8h',
+  '0 8 * * 1':'Chaque lundi à 8h','0 9 1 * *':'Le 1er du mois à 9h',
+};
+
+function setCron(expr, label) {
+  document.getElementById('sch-cron').value = expr;
+  document.getElementById('cron-human').textContent = '⏰ ' + label;
+}
+function updateCronHuman() {
+  const v = document.getElementById('sch-cron').value.trim();
+  document.getElementById('cron-human').textContent = CRON_LABELS[v] ? '⏰ ' + CRON_LABELS[v] : '';
+}
+
+async function createSchedule() {
+  const url = document.getElementById('sch-url').value.trim();
+  const cronExpr = document.getElementById('sch-cron').value.trim();
+  const mode = document.getElementById('sch-mode').value;
+  const selectors = getSels('sch-sels');
+  const cronHuman = CRON_LABELS[cronExpr] || cronExpr;
+  if (!url||!cronExpr) return toast('URL et cron requis','err');
+  try {
+    const r = await fetch(`${API}/schedules`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,cronExpr,cronHuman,mode,selectors})});
+    const d = await r.json();
+    if (d.error) return toast(d.error,'err');
+    toast('Planning créé ✅','ok');
+    loadSchedules();
+  } catch(e) { toast(e.message,'err'); }
+}
+
+async function loadSchedules() {
+  try {
+    const list = await (await fetch(`${API}/schedules`)).json();
+    const el = document.getElementById('sch-list');
+    if (!list.length) { el.innerHTML = '<div class="empty"><div class="ei">⏰</div>Aucun planning</div>'; return; }
+    el.innerHTML = list.map(s => `
+      <div class="sched-card">
+        <div>
+          <div class="sched-url" title="${s.url}">${s.url}</div>
+          <div class="sched-meta">
+            <span>⏰ ${s.cronHuman}</span>
+            <span class="mono">${s.cronExpr}</span>
+            <span>${s.mode}</span>
+            <span>Lancé ${s.runCount}x</span>
+            ${s.lastRun?`<span>Dernier: ${new Date(s.lastRun).toLocaleString('fr-FR')}</span>`:''}
+            <span class="badge ${s.active?'b-done':'b-off'}">${s.active?'actif':'pause'}</span>
+          </div>
+        </div>
+        <div class="sched-actions">
+          <button class="btn btn-sec btn-sm" onclick="toggleSched('${s.id}',this)">${s.active?'⏸':'▶'}</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSched('${s.id}',this)">🗑</button>
+        </div>
+      </div>`).join('');
+  } catch(e) { toast('Erreur chargement schedules','err'); }
+}
+
+async function toggleSched(id, btn) {
+  btn.disabled=true;
+  const d = await (await fetch(`${API}/schedules/${id}/toggle`,{method:'PATCH'})).json();
+  btn.disabled=false;
+  loadSchedules();
+}
+async function deleteSched(id, btn) {
+  btn.disabled=true;
+  await fetch(`${API}/schedules/${id}`,{method:'DELETE'});
+  loadSchedules(); toast('Planning supprimé');
+}
+
+// ── PROXIES ───────────────────────────────────────────────────────────────────
+async function loadProxies() {
+  const pxs = await (await fetch(`${API}/proxies`)).json();
+  document.getElementById('px-total').textContent = pxs.length;
+  document.getElementById('px-alive').textContent = pxs.filter(p=>p.alive).length;
+  document.getElementById('px-dead').textContent  = pxs.filter(p=>!p.alive).length;
+  document.getElementById('px-used').textContent  = pxs.reduce((s,p)=>s+p.used,0);
+  const el = document.getElementById('px-list');
+  if (!pxs.length) { el.innerHTML = '<div class="empty"><div class="ei">🔀</div>Aucun proxy</div>'; return; }
+  el.innerHTML = pxs.map((p,i) => `
+    <div class="proxy-row">
+      <div class="pstatus ${p.alive?'alive':'dead'}"></div>
+      <div class="mono" style="font-size:11.5px;overflow:hidden;text-overflow:ellipsis;">${p.url}</div>
+      <div class="mono" style="font-size:11px;color:var(--t3);">${p.used} req</div>
+      <div class="mono" style="font-size:11px;color:${p.errors>0?'var(--r)':'var(--t3)'};">${p.errors} err</div>
+      <button class="btn btn-danger btn-xs" onclick="removeProxy(${i},this)">✕</button>
+    </div>`).join('');
+}
+
+async function addProxies() {
+  const raw = document.getElementById('px-input').value.trim();
+  const urls = raw.split('\n').map(u=>u.trim()).filter(Boolean);
+  if (!urls.length) return toast('Ajoutez des URLs','err');
+  const r = await fetch(`${API}/proxies`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({proxyUrls:urls})});
+  const d = await r.json();
+  toast(`${d.added} proxy(s) ajouté(s) ✅`,'ok');
+  document.getElementById('px-input').value = '';
+  loadProxies();
+}
+
+async function testProxy() {
+  const raw = document.getElementById('px-input').value.trim()||
+    (document.querySelectorAll('.proxy-row')[0]?.querySelector('.mono')?.textContent);
+  if (!raw) return toast('Aucun proxy à tester','err');
+  const url = raw.split('\n')[0].trim();
+  const el = document.getElementById('px-test-res');
+  el.style.display = '';
+  el.innerHTML = `<div class="flex"><div class="spin"></div><span style="margin-left:6px;color:var(--t2);">Test de ${url}...</span></div>`;
+  const d = await (await fetch(`${API}/proxies/test`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({proxyUrl:url})})).json();
+  el.innerHTML = d.success
+    ? `<div style="color:var(--g);font-size:13px;">✅ Proxy fonctionnel — IP sortante: <strong class="mono">${d.ip}</strong></div>`
+    : `<div style="color:var(--r);font-size:13px;">❌ Proxy KO — ${d.error}</div>`;
+}
+
+async function removeProxy(i, btn) { btn.disabled=true; await fetch(`${API}/proxies/${i}`,{method:'DELETE'}); loadProxies(); }
+async function clearProxies() { if(!confirm('Vider tout le pool ?')) return; await fetch(`${API}/proxies`,{method:'DELETE'}); loadProxies(); toast('Pool vidé'); }
+
+// ── NOTIFICATIONS ─────────────────────────────────────────────────────────────
+async function loadSettings() {
+  try {
+    const s = await (await fetch(`${API}/settings`)).json();
+    if (s.smtp) {
+      document.getElementById('smtp-host').value = s.smtp.host||'';
+      document.getElementById('smtp-port').value = s.smtp.port||587;
+      document.getElementById('smtp-user').value = s.smtp.user||'';
+      document.getElementById('smtp-pass').value = s.smtp.pass||'';
+      document.getElementById('smtp-from').value = s.smtp.from||'';
+    }
+    if (s.notifyEmail) document.getElementById('smtp-to').value = s.notifyEmail;
+    if (s.webhook) document.getElementById('wh-url').value = s.webhook;
+    if (s.googleSheets) {
+      document.getElementById('gs-id').value = s.googleSheets.spreadsheetId||'';
+      if (s.googleSheets.credentialsJson && s.googleSheets.credentialsJson !== '[configuré ✓]')
+        document.getElementById('gs-creds').value = s.googleSheets.credentialsJson;
+    }
+  } catch {}
+}
+
+async function saveNotifSettings() {
+  const smtp = {
+    host: document.getElementById('smtp-host').value,
+    port: parseInt(document.getElementById('smtp-port').value)||587,
+    user: document.getElementById('smtp-user').value,
+    pass: document.getElementById('smtp-pass').value,
+    from: document.getElementById('smtp-from').value,
+  };
+  const notifyEmail = document.getElementById('smtp-to').value;
+  const webhook = document.getElementById('wh-url').value;
+  await fetch(`${API}/settings`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({smtp,notifyEmail,webhook})});
+  toast('Paramètres sauvegardés ✅','ok');
+}
+
+async function testEmail() {
+  await saveNotifSettings();
+  const d = await (await fetch(`${API}/settings/test-email`,{method:'POST'})).json();
+  d.success ? toast('Email test envoyé ✅','ok') : toast('Erreur email: '+d.error,'err');
+}
+async function testWebhook() {
+  await saveNotifSettings();
+  const d = await (await fetch(`${API}/settings/test-webhook`,{method:'POST'})).json();
+  d.success ? toast('Webhook OK ✅','ok') : toast('Erreur webhook: '+d.error,'err');
+}
+
+async function saveSheetSettings() {
+  const googleSheets = {
+    credentialsJson: document.getElementById('gs-creds').value,
+    spreadsheetId: document.getElementById('gs-id').value,
+  };
+  await fetch(`${API}/settings`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({googleSheets})});
+  toast('Paramètres Google Sheets sauvegardés ✅','ok');
+}
+
+async function manualExportSheets() {
+  const id = document.getElementById('gs-job-id').value.trim();
+  const sheetName = document.getElementById('gs-tab').value.trim();
+  if (!id) return toast('Entrez un Job ID','err');
+  try {
+    const r = await fetch(`${API}/results/${id}/export-sheets`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sheetName})});
+    const d = await r.json();
+    if (d.success) { toast('Exporté vers Google Sheets ✅','ok'); window.open(d.url,'_blank'); }
+    else toast('Erreur: '+d.error,'err');
+  } catch(e) { toast(e.message,'err'); }
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function toast(msg, type='') {
+  const el = document.createElement('div');
+  el.className = 'toast' + (type?' '+type:'');
+  el.textContent = msg;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(() => el.remove(), 3600);
+}
+
+// ── HEALTH CHECK ──────────────────────────────────────────────────────────────
+async function checkHealth() {
+  try {
+    const d = await (await fetch(`${API}/health`)).json();
+    document.getElementById('api-dot').className = 'dot';
+    document.getElementById('api-lbl').textContent = 'API connectée';
+    document.getElementById('api-stats').textContent = `jobs:${d.jobs} px:${d.proxies} cron:${d.schedules}`;
+  } catch {
+    document.getElementById('api-dot').className = 'dot red';
+    document.getElementById('api-lbl').textContent = 'API hors ligne';
+    document.getElementById('api-stats').textContent = '';
+  }
+}
+checkHealth();
+setInterval(checkHealth, 20000);
+</script>
+</body>
+</html>
